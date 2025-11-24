@@ -1,33 +1,27 @@
 import streamlit as st
-import pandas as pd
-import joblib
+import pickle
+import numpy as np
 
-# Load trained model
-model = joblib.load("decision_tree_gini_model.pkl")
+st.title("Credit Card Fraud Detection App")
+st.write("Predict whether a transaction is Legitimate or Fraudulent using a Decision Tree model.")
 
-st.title("💳 Credit Card Fraud Detection App")
-st.write("This web app predicts whether a transaction is Legitimate or Fraudulent using a Decision Tree model.")
+# Load Model
+model = pickle.load(open("decision_tree_entropy_model.pkl", "rb"))
 
-# Input features
-transaction_amount = st.number_input("Transaction Amount", min_value=1.0)
-transaction_time = st.number_input("Transaction Time (seconds since midnight)", min_value=0.0, max_value=86400.0)
-account_age_days = st.number_input("Account Age (in days)", min_value=1.0)
-merchant_risk_score = st.slider("Merchant Risk Score", 0.0, 1.0, 0.5)
-transaction_velocity = st.number_input("Transaction Velocity (transactions/hour)", min_value=0.0, max_value=20.0)
+# UI Inputs
+amount = st.number_input("Transaction Amount", min_value=0.0)
+time_sec = st.number_input("Transaction Time (seconds since midnight)", min_value=0.0, max_value=86400.0)
+account_age = st.number_input("Account Age (days)", min_value=0.0)
+merchant_risk = st.slider("Merchant Risk Score", 0.0, 1.0, 0.0)
+velocity = st.number_input("Transaction Velocity (transactions/hour)", min_value=0.0)
 
-# Create input DataFrame
-input_data = pd.DataFrame({
-    "Transaction_Amount": [transaction_amount],
-    "Transaction_Time": [transaction_time],
-    "Account_Age_Days": [account_age_days],
-    "Merchant_Risk_Score": [merchant_risk_score],
-    "Transaction_Velocity": [transaction_velocity]
-})
-
-# Predict
+# Prediction
 if st.button("Predict"):
-    prediction = model.predict(input_data)[0]
-    if prediction == 1:
-        st.success("✅ Legitimate Transaction")
-    else:
+    features = np.array([[amount, time_sec, account_age, merchant_risk, velocity]])
+    result = model.predict(features)[0]
+    
+    if result == 1:
         st.error("🚨 Fraudulent Transaction Detected!")
+    else:
+        st.success("✅ Legitimate Transaction")
+
